@@ -1,0 +1,8 @@
+{
+  "dependencies": ["."],
+  "graphs": {
+    "agent": "./app/agent/law.py:agent"
+  },
+  "env": ".env",
+  "static": "./app/static"
+}

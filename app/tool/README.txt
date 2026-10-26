@@ -1,0 +1,1 @@
+本目录是自建工具系统的框架层练习。tool_base.py 定义工具抽象及参数/schema 转换；law_tools.py 包装具体法律搜索；search_tool.py 放搜索工具实现或相关适配；注册表/执行流程应负责按名称查找工具、校验参数并调用 run。它与 app/simpletool 的侧重点不同：本目录练习通用 Tool 接口和注册，本目录的工具尚需通过适配层接入 LangChain Agent 才能在主 Agent 中使用。

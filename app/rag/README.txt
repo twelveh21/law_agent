@@ -1,0 +1,1 @@
+本目录实现法律 RAG（检索增强生成）的协调与核心能力。pipeline.py 串起文件解析、切块、来源标注和入库，并提供统一检索入口；simpletool 中的 search_qdrant_knowledge 会把检索结果交给 LangChain 法律 Agent。embeddings.py 管理文本向量化模型及维度；ingestion 负责入库，retrieval 执行查询，storage 管理 Qdrant。典型闭环是：准备资料→解析和切块→向量化并写库→按问题检索→Agent 根据命中的原文回答。

@@ -1,0 +1,1 @@
+本目录里有一份 app/db/law.db 及 SQLite 的 -shm、-wal 辅助文件。项目当前默认数据库路径由 app/common/path.py 指向项目根目录 db/law.db，因此这里这份数据库可能是早期运行留下的旧位置副本；不要假设两份数据库自动同步，也不要手工删除或编辑 SQLite 文件。需要确认实际使用位置时检查 LAW_DATABASE_PATH 环境变量和运行日志。

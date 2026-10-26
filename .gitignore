@@ -1,0 +1,56 @@
+# Secrets and machine-specific configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+
+# Python environments and generated files
+.venv/
+.langgraph_api/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local runtime state. The public legal Chroma index in chroma_db/ is kept.
+/db/*
+!/db/README.txt
+/app/db/*
+!/app/db/README.txt
+/app/chroma_db/*
+!/app/chroma_db/README.txt
+**/*.db
+**/*.db-*
+**/*.sqlite
+**/*.sqlite3
+**/*.sqlite-*
+!/chroma_db/chroma.sqlite3
+/data/notes/
+/logs/
+/input/*
+!/input/README.txt
+/output/*
+!/output/README.txt
+/pdf/*
+!/pdf/README.txt
+/archives/*
+!/archives/README.txt
+*.zip
+
+# IDE and generated frontend exports not used by the maintained UI
+.idea/
+/app/static/_next/
+/app/static/404/
+/app/static/_not-found/
+/app/static/404.html
+/app/static/*.txt
+!/app/static/README.txt
+
+.DS_Store
+Thumbs.db

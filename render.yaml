@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: law-agent-demo
+    runtime: python
+    plan: free
+    buildCommand: uv sync --frozen --no-dev
+    startCommand: uv run uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: DASHSCOPE_API_KEY
+        sync: false
+      - key: DASHSCOPE_BASE_URL
+        sync: false
+      - key: TAVILY_API_KEY
+        sync: false
+      - key: OSS_ACCESS_KEY_ID
+        sync: false
+      - key: OSS_ACCESS_KEY_SECRET
+        sync: false
+      - key: OSS_BUCKET
+        sync: false
+      - key: CHROMA_COLLECTION_NAME
+        value: langchain
+      - key: LAW_DATABASE_PATH
+        value: /tmp/law.db
+      - key: MEMORY_DATABASE_PATH
+        value: /tmp/memory.db
+      - key: THREAD_SCOPED_NOTES
+        value: "true"
+      - key: CHAT_RATE_LIMIT_PER_MINUTE
+        value: "10"
+      - key: UPLOAD_RATE_LIMIT_PER_MINUTE
+        value: "10"

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#172536" />
+    <meta name="description" content="让法律问题，有据可循。" />
+    <title>律知 · 法律 AI 助理</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css?v=20261026-1" />
+    <script src="/app.js?v=20261026-3" defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar" aria-label="会话侧栏">
+        <a class="brand" href="/" aria-label="律知首页">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none"><path d="M16 5v21M8 10h16M8 10l-4 9h8l-4-9Zm16 0-4 9h8l-4-9ZM11 27h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="16" cy="5" r="2" fill="currentColor"/></svg>
+          </span>
+          <span class="brand-copy"><strong>律知</strong><small>LEGAL AI ASSISTANT</small></span>
+        </a>
+
+        <button class="new-chat-button" id="newChatButton" type="button">
+          <span class="plus-icon" aria-hidden="true">＋</span><span>开启新对话</span>
+          <kbd>⌘ K</kbd>
+        </button>
+
+        <div class="sidebar-section-heading"><span>最近会话</span><span class="history-dot"></span></div>
+        <nav class="session-list" id="sessionList" aria-label="最近会话"></nav>
+        <div class="sidebar-spacer"></div>
+        <div class="sidebar-note">
+          <span class="note-icon" aria-hidden="true">✳</span>
+          <div><strong>让每个结论都有依据</strong><p>结合本地法律资料与联网检索</p></div>
+        </div>
+        <div class="sidebar-footer"><span class="avatar">知</span><span><strong>个人工作台</strong><small>你的法律研究助手</small></span><span class="footer-more">···</span></div>
+      </aside>
+
+      <div class="session-context-menu" id="sessionContextMenu" role="menu" aria-label="会话操作" hidden>
+        <button id="renameSessionAction" type="button" role="menuitem" data-session-action="rename">重命名</button>
+        <button id="togglePinAction" type="button" role="menuitem" data-session-action="toggle-pin">置顶会话</button>
+        <div class="context-menu-divider" aria-hidden="true"></div>
+        <button class="delete-action" type="button" role="menuitem" data-session-action="delete">删除会话</button>
+      </div>
+
+      <div class="mobile-scrim" id="mobileScrim"></div>
+      <main class="workspace">
+        <header class="topbar">
+          <div class="topbar-left">
+            <button class="icon-button menu-button" id="menuButton" type="button" aria-label="打开会话栏"><span></span><span></span></button>
+            <div class="breadcrumb"><span>工作台</span><span class="crumb-slash">/</span><strong>法律问答</strong></div>
+          </div>
+          <div class="topbar-right"><span class="secure-label"><i></i> 会话记录已保存</span><button class="top-new-button" id="topNewChatButton" type="button">＋ 新对话</button></div>
+        </header>
+
+        <section class="chat-layout" aria-label="法律问答">
+          <div class="conversation" id="conversation">
+            <section class="welcome" id="welcome">
+              <div class="welcome-kicker"><span class="kicker-line"></span> LEGAL RESEARCH, MADE CLEAR</div>
+              <h1>让法律问题，<br /><em>有据可循。</em></h1>
+              <p class="welcome-description">描述你遇到的情况，我会先查找相关法律资料，<br class="desktop-break" />再帮你梳理重点与可能的下一步。</p>
+
+              <div class="welcome-divider"><span>从一个问题开始</span></div>
+              <div class="suggestion-grid" id="suggestionGrid">
+                <button class="suggestion-card" type="button" data-prompt="劳动合同到期后，公司不续签需要支付经济补偿吗？"><span class="suggestion-icon icon-work">↗</span><span><strong>劳动与用工</strong><small>合同、工资、离职补偿</small></span><span class="card-arrow">→</span></button>
+                <button class="suggestion-card" type="button" data-prompt="签订租房合同前，有哪些关键条款需要重点检查？"><span class="suggestion-icon icon-home">⌂</span><span><strong>合同与租赁</strong><small>条款审阅、履约争议</small></span><span class="card-arrow">→</span></button>
+                <button class="suggestion-card" type="button" data-prompt="网购商品有质量问题，商家拒绝退换，我可以怎么处理？"><span class="suggestion-icon icon-rights">◇</span><span><strong>消费与维权</strong><small>退款、赔偿、投诉渠道</small></span><span class="card-arrow">→</span></button>
+                <button class="suggestion-card" type="button" data-prompt="收到一份法律文书，我应该先确认哪些信息？"><span class="suggestion-icon icon-doc">▤</span><span><strong>文书与流程</strong><small>材料理解、办理步骤</small></span><span class="card-arrow">→</span></button>
+              </div>
+              <p class="welcome-footnote"><span>ⓘ</span> 回答用于信息参考，不替代律师针对具体案件的专业意见。</p>
+            </section>
+
+            <div class="message-list" id="messageList" aria-live="polite"></div>
+            <div class="scroll-anchor" id="scrollAnchor"></div>
+          </div>
+
+          <div class="composer-area">
+            <div class="composer-wrap">
+              <div class="attachment-preview" id="attachmentPreview" hidden></div>
+              <div class="composer">
+                <input id="imageInput" type="file" accept="image/*" hidden />
+                <button class="attach-button" id="attachButton" type="button" aria-label="添加图片" title="上传图片">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><circle cx="9" cy="9" r="1.7"/><path d="m20.5 15-4.4-4.4a2 2 0 0 0-2.8 0L6 18"/></svg>
+                </button>
+                <textarea id="messageInput" rows="1" placeholder="描述你的法律问题……" aria-label="输入法律问题"></textarea>
+                <div class="composer-tools"><span class="enter-hint">Enter 发送 · Shift + Enter 换行</span><button class="send-button" id="sendButton" type="button" aria-label="发送消息" disabled><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m21 3-7.2 18-3.9-7.9L2 9.2 21 3Z"/><path d="M10 13 21 3"/></svg></button></div>
+              </div>
+              <div class="composer-caption"><span>律知可能会出错，请核对重要法律信息。</span><span class="powered-by">POWERED BY AI</span></div>
+              <div class="notice" id="notice" role="status" aria-live="polite"></div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
