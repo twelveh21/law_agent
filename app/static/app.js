@@ -293,6 +293,7 @@
         body: JSON.stringify({ message: text, image_url: imageUrl, thread_id: state.activeId }),
       });
       if (response.status === 429) throw new Error("请求太频繁，请一分钟后再试。");
+      if (response.status === 422) throw new Error("消息或会话参数不符合要求，请缩短消息后重试。");
       if (!response.ok) throw new Error(`请求失败（${response.status}），请稍后再试。`);
       if (!response.body) throw new Error("浏览器无法读取响应流。");
 

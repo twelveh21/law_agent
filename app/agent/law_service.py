@@ -10,7 +10,12 @@ from app.simpletool.note_tools import delete_project_notes_for_thread
 
 def search_recipes(prompt: str, image: str, thread_id: str):
     """Stream a response from the legal agent for one chat request."""
-    logger.info(f"[用户]: {prompt}, image: {image}, thread_id: {thread_id}")
+    # Never put user content or signed image URLs in hosted service logs.
+    logger.info(
+        "收到对话请求 thread_id=%s has_image=%s",
+        thread_id,
+        bool(image and image.strip()),
+    )
     try:
         if not image or image.strip() == "":
             message = HumanMessage(content=prompt)
@@ -30,7 +35,8 @@ def search_recipes(prompt: str, image: str, thread_id: str):
             if isinstance(chunk, AIMessageChunk) and chunk.content:
                 yield chunk.content
     except Exception as exc:
-        logger.error(f"[错误]: {exc}")
+        # SDK exceptions can contain request details; log only the exception type.
+        logger.error("对话处理失败 error_type=%s", type(exc).__name__)
         yield "信息检索失败，请稍后重试。"
 
 
