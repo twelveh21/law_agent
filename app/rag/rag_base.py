@@ -4,7 +4,7 @@ Implementations live in focused modules under app.rag. Prefer importing from
 those modules directly in new code.
 """
 
-from app.agent.law import agent, model
+from app.agent.law import model
 
 from .agent_tool import RAGTool
 from .embeddings import (

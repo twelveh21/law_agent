@@ -23,6 +23,7 @@ class AnswerInfo(BaseModel):
 class ChatRequest(BaseModel):
     """前端发来的对话请求"""
     message: str = Field(max_length=8000)
+    review_answer: bool = Field(default=False, description="是否按本轮本地检索材料复核回答")
     image_url: Optional[str] = Field(default=None, max_length=4096)
     thread_id: str = Field(
         min_length=1,

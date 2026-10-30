@@ -271,6 +271,7 @@
     const input = $("#messageInput");
     const text = input.value.trim();
     const file = state.imageFile;
+    const reviewAnswer = $("#reviewAnswer").checked;
     if (state.busy || (!text && !file)) return;
     showNotice("");
     setBusy(true);
@@ -290,22 +291,25 @@
       const response = await fetch("/api/v1/chat/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, image_url: imageUrl, thread_id: state.activeId }),
+        body: JSON.stringify({ message: text, image_url: imageUrl, thread_id: state.activeId, review_answer: reviewAnswer }),
       });
       if (response.status === 429) throw new Error("请求太频繁，请一分钟后再试。");
       if (response.status === 422) throw new Error("消息或会话参数不符合要求，请缩短消息后重试。");
       if (!response.ok) throw new Error(`请求失败（${response.status}），请稍后再试。`);
       if (!response.body) throw new Error("浏览器无法读取响应流。");
 
-      answerNode.textContent = "";
+      // Keep the waiting indicator until the first response bytes arrive.
+      let receivedText = false;
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
+        if (!receivedText) { answerNode.textContent = ""; receivedText = true; }
         answerNode.textContent += decoder.decode(value, { stream: true });
         scrollToBottom();
       }
+      if (!receivedText) answerNode.textContent = "";
       answerNode.textContent += decoder.decode();
       if (!answerNode.textContent.trim()) answerNode.textContent = "暂时没有收到回答，请重试。";
       const session = activeSession();

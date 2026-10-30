@@ -7,21 +7,19 @@ from bs4 import BeautifulSoup
 from langchain_chroma import Chroma
 from langchain_community.embeddings import DashScopeEmbeddings
 from langchain_core.tools import tool
-from langchain_tavily import TavilySearch
 
 from app.common.legal_rag import LAW_COLLECTION_NAME
 from app.common.path import CHROMA_DIR
-from app.rag.pipeline import retrieve_knowledge
+from app.rag.service import search_legal_knowledge_text
 
 
-# These clients are shared by the tool functions instead of being recreated per call.
+# This client is shared by the local knowledge search tool.
 vectorstore = Chroma(
     persist_directory=str(CHROMA_DIR),
     # 本地默认使用新索引；Render 可切换到已包含法律切片的 legacy collection。
     collection_name=os.getenv("CHROMA_COLLECTION_NAME", LAW_COLLECTION_NAME),
     embedding_function=DashScopeEmbeddings(),
 )
-tavily_client = TavilySearch(max_results=5, topic="general")
 
 
 @tool
@@ -47,38 +45,9 @@ def search_local_knowledge(query: str) -> str:
 def search_qdrant_knowledge(query: str) -> str:
     """Search the Qdrant RAG collection and return law text with source metadata."""
     try:
-        results = retrieve_knowledge(query, top_k=5)
-    except Exception as exc:
-        return f"Qdrant 法律知识库检索失败：{exc}"
-
-    if not results:
-        return "Qdrant 法律知识库中没有找到相关内容。"
-
-    formatted_results = []
-    for rank, result in enumerate(results, start=1):
-        metadata = result.get("metadata") or {}
-        source = metadata.get("source_name") or metadata.get("source") or "未知来源"
-        article = metadata.get("article")
-        heading = metadata.get("heading_path")
-        location = article or heading
-        score = float(result.get("score", 0.0))
-
-        citation = f"来源：{source}"
-        if location:
-            citation += f"；位置：{location}"
-        formatted_results.append(
-            f"[Qdrant 检索结果 {rank}] {citation}；相似度：{score:.3f}\n"
-            f"{result.get('content', '')}"
-        )
-
-    return "\n\n---\n\n".join(formatted_results)
-
-
-@tool
-def search_law(query: str) -> str:
-    """Search the web for Chinese laws, regulations, interpretations, and cases."""
-    enhanced_query = f"{query} 中国法律法规 司法解释 site:gov.cn"
-    return tavily_client.invoke(enhanced_query)
+        return search_legal_knowledge_text(query, top_k=5)
+    except Exception:
+        return "Qdrant 法律知识库检索失败，请检查数据库和向量模型配置。"
 
 
 @tool

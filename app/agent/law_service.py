@@ -1,14 +1,19 @@
 """Application-level conversation operations for the legal agent."""
 
+import asyncio
+
 from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage
 
-from app.agent.law import agent, checkpointer
 from app.common.logger import logger
 from app.memory.memory_act import MemoryTool
+from app.refagent.evidence_review import answer_with_review
 from app.simpletool.note_tools import delete_project_notes_for_thread
 
 
-def search_recipes(prompt: str, image: str, thread_id: str):
+async def search_recipes(
+    agent, prompt: str, image: str, thread_id: str,
+    review_answer: bool = False, reviewer=None,
+):
     """Stream a response from the legal agent for one chat request."""
     # Never put user content or signed image URLs in hosted service logs.
     logger.info(
@@ -27,7 +32,16 @@ def search_recipes(prompt: str, image: str, thread_id: str):
                 ]
             )
 
-        for chunk, metadata in agent.stream(
+        if review_answer:
+            if reviewer is None:
+                raise RuntimeError("回答复核组件未初始化")
+            yield await answer_with_review(
+                agent, reviewer, message,
+                {"configurable": {"thread_id": thread_id}},
+            )
+            return
+
+        async for chunk, metadata in agent.astream(
             {"messages": [message]},
             {"configurable": {"thread_id": thread_id}},
             stream_mode="messages",
@@ -40,10 +54,15 @@ def search_recipes(prompt: str, image: str, thread_id: str):
         yield "信息检索失败，请稍后重试。"
 
 
-def clear_messages(thread_id: str) -> int:
+async def clear_messages(checkpointer, thread_id: str) -> int:
     """Delete one thread's checkpoint history and its thread-scoped memories."""
     logger.info(f"清空历史消息，thread_id: {thread_id}")
-    checkpointer.delete_thread(thread_id)
+    await checkpointer.adelete_thread(thread_id)
+    # Memory/note deletion uses synchronous file/database operations.
+    return await asyncio.to_thread(_clear_thread_storage, thread_id)
+
+
+def _clear_thread_storage(thread_id: str) -> int:
     memory_tool = MemoryTool(
         user_id=thread_id,
         session_id=thread_id,
@@ -56,10 +75,10 @@ def clear_messages(thread_id: str) -> int:
     return deleted_memories
 
 
-def get_messages(thread_id: str) -> list[dict[str, str]]:
+async def get_messages(checkpointer, thread_id: str) -> list[dict[str, str]]:
     """Return user and assistant messages saved for one conversation thread."""
     logger.info(f"获取历史消息，thread_id: {thread_id}")
-    checkpoint = checkpointer.get({"configurable": {"thread_id": thread_id}})
+    checkpoint = await checkpointer.aget({"configurable": {"thread_id": thread_id}})
     if not checkpoint:
         return []
 

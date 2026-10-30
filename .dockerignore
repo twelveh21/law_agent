@@ -1,0 +1,26 @@
+# Allowlist: only source and locked dependency files enter the build context.
+**
+!Dockerfile
+!.dockerignore
+!pyproject.toml
+!uv.lock
+!app/
+!app/**
+!scripts/
+!scripts/**
+
+# Never send secrets or runtime state from allowed source directories.
+**/.env
+**/.env.*
+**/*.pem
+**/*.key
+**/*.db
+**/*.db-*
+**/*.sqlite*
+**/__pycache__/
+**/*.py[cod]
+app/db/
+app/chroma_db/
+app/static/_next/
+app/static/404/
+app/static/_not-found/

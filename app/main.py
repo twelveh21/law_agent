@@ -1,6 +1,7 @@
 import sys
 from pathlib import Path
 import os
+from contextlib import AsyncExitStack, asynccontextmanager
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 project_root_text = str(PROJECT_ROOT)
@@ -13,14 +14,33 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1 import chat
 from app.api.v1 import oss
 from app.common.logger import setup_logging
+from app.agent.law import create_law_agent, model
+from app.refagent.evidence_review import EvidenceReviewer
+from app.common.path import DATABASE_PATH
+from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 
 # 初始化日志配置
 setup_logging()
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Load MCP tools and build the Agent once when the web app starts."""
+    async with AsyncExitStack() as mcp_stack:
+        DATABASE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        app.state.checkpointer = await mcp_stack.enter_async_context(
+            AsyncSqliteSaver.from_conn_string(str(DATABASE_PATH))
+        )
+        await app.state.checkpointer.setup()
+        app.state.agent = await create_law_agent(mcp_stack, app.state.checkpointer)
+        app.state.reviewer = EvidenceReviewer(model)
+        yield
+
 app = FastAPI(
     title="Personal Chief API",
     description="私厨",
-    version="0.1.0"
+    version="0.1.0",
+    lifespan=lifespan,
 )
 
 # 同源托管前端和 API 时不需要 CORS。只有单独部署前端时才配置明确的可信域名。

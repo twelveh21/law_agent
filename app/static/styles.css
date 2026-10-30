@@ -174,3 +174,7 @@ button { color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+.review-option { display: flex; align-items: center; gap: 6px; padding: 9px 3px 0; color: #626b69; font-size: 12px; flex-wrap: wrap; }
+.review-option input { accent-color: #ad8652; }
+.review-option span { color: #858c89; font-size: 11px; }

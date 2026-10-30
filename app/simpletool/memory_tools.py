@@ -5,6 +5,7 @@ from typing import Literal
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool
 
+from app.context import ContextPacket
 from app.memory.memory_act import MemoryTool
 from app.memory.memory_base import MemoryConfig
 from app.simpletool.thread_scope import get_thread_id
@@ -25,6 +26,28 @@ def _build_memory_tool(thread_id: str) -> MemoryTool:
         memory_config=MemoryConfig(),
         memory_types=_MEMORY_TYPES,
     )
+
+
+def retrieve_memory_packets(thread_id: str, query: str, limit: int = 3) -> list[ContextPacket]:
+    """Read this thread's saved memories as structured context candidates."""
+    if not thread_id or not thread_id.strip() or not query.strip():
+        return []
+    memory_tool = _build_memory_tool(thread_id)
+    memories = memory_tool.memory_manager.retrieve_memories(
+        query=query,
+        limit=limit,
+        memory_types=_MEMORY_TYPES,
+        min_importance=0.1,
+    )
+    return [
+        ContextPacket(
+            content=f"[用户曾保存的记忆｜{item.memory_type}｜{item.timestamp.isoformat()}]\n{item.content}",
+            timestamp=item.timestamp,
+            relevance_score=item.score,
+            metadata={"type": "memory", "memory_id": item.id},
+        )
+        for item in memories
+    ]
 
 
 @tool

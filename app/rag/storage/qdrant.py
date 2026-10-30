@@ -158,3 +158,11 @@ def _create_default_vector_store(vector_size: Optional[int] = None) -> _QdrantSt
         vector_size = get_dimension()
     pipeline = create_rag_pipeline(vector_size=vector_size)
     return pipeline["store"]
+
+
+def close_cached_pipelines() -> None:
+    """Close shared clients explicitly before the MCP process exits."""
+    clients = {id(pipeline["client"]): pipeline["client"] for pipeline in _PIPELINE_CACHE.values()}
+    _PIPELINE_CACHE.clear()
+    for client in clients.values():
+        client.close()

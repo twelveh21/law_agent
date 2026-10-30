@@ -54,3 +54,6 @@ htmlcov/
 
 .DS_Store
 Thumbs.db
+
+# Local Qdrant runtime files (including user-provided legal documents).
+/data/rag_qdrant/

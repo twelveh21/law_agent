@@ -1,6 +1,6 @@
 from typing import Any, Dict, Optional
 
-from app.agent.law import agent
+from app.agent.law import model
 from app.tool.tool_base import Tool
 from .storage.qdrant import create_rag_pipeline
 
@@ -29,8 +29,8 @@ class RAGTool(Tool):
         self.collection_name = collection_name
         self.rag_namespace = rag_namespace
         self._pipelines:Dict[str,Dict[str,Any]]={}
-        # law.py 中的 agent 已经是 create_agent(...) 创建好的对象，不是工厂函数。
-        self.llm=agent
+        # RAGTool 需要的是模型客户端，不是组装后的 LangChain Agent。
+        self.llm = model
 
         default_pipeline=create_rag_pipeline(
             qdrant_url=self.qdrant_url,

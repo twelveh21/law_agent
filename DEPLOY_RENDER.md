@@ -16,7 +16,7 @@
 1. 检查 `.gitignore` 和待提交文件，确认 `.env`、本地数据库、`data/notes/`、`input/`、`output/`、`pdf/`、`archives/` 没有进入 Git。
 2. 将项目推送到自己的 GitHub 仓库。仓库根目录必须保留 `pyproject.toml`、`uv.lock`、`render.yaml` 和 `.python-version`。
 3. 在 Render 选择 **New → Blueprint**, 连接该 GitHub 仓库并应用 `render.yaml`。
-4. 在 Render 提示时填写 `DASHSCOPE_API_KEY`、`DASHSCOPE_BASE_URL`、`TAVILY_API_KEY`。要开放图片上传，再填写 OSS 三项配置。
+4. 在 Render 提示时填写 `DASHSCOPE_API_KEY`、`DASHSCOPE_BASE_URL`、`TAVILY_API_KEY`。`TAVILY_MCP_URL` 已在 `render.yaml` 配置为 Tavily 官方远程 MCP 地址。要开放图片上传，再填写 OSS 三项配置。
 5. 等待首次部署完成，打开 Render 给出的 `onrender.com` 地址。前端和 API 同源，不需要单独改 API 地址或开放跨域。
 
 ## 免费演示的限制

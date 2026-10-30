@@ -1,0 +1,26 @@
+name: law-agent
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: law-agent:local
+    init: true
+    env_file:
+      - .env
+    environment:
+      # Override host-specific paths with paths INSIDE the Linux container.
+      LAW_DATABASE_PATH: /var/lib/law-agent/db/law.db
+      MEMORY_DATABASE_PATH: /var/lib/law-agent/db/memory.db
+      LAW_DATA_DIR: /var/lib/law-agent/data
+      LAW_NOTES_DIR: /var/lib/law-agent/data/notes
+      CHROMA_PATH: /var/lib/law-agent/chroma
+    ports:
+      - "127.0.0.1:${LAW_HTTP_PORT:-8001}:8000"
+    volumes:
+      # Bind mounts reuse the existing local records and 98 Qdrant chunks.
+      - ./db:/var/lib/law-agent/db
+      - ./data:/var/lib/law-agent/data
+      - ./chroma_db:/var/lib/law-agent/chroma
+    stop_grace_period: 30s
