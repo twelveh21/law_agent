@@ -20,9 +20,31 @@ class AnswerInfo(BaseModel):
 
 # ===== API 请求/响应模型（如果你用教程的对话接口，这个保留）=====
 
+class ChatAttachment(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    text: str = Field(default="", max_length=30000)
+    image: str = Field(default="", max_length=14000000)
+
+    @model_validator(mode="after")
+    def validate_content(self):
+        if bool(self.text) == bool(self.image):
+            raise ValueError("附件必须包含文字或图片之一")
+        if self.image:
+            import base64
+            prefix, sep, data = self.image.partition(",")
+            if not sep or prefix not in {"data:image/png;base64", "data:image/jpeg;base64", "data:image/webp;base64"}:
+                raise ValueError("不支持的图片格式")
+            try:
+                base64.b64decode(data, validate=True)
+            except ValueError as exc:
+                raise ValueError("图片数据无效") from exc
+        return self
+
+
 class ChatRequest(BaseModel):
     """前端发来的对话请求"""
-    message: str = Field(max_length=8000)
+    message: str = Field(default="", max_length=8000)
+    attachments: List[ChatAttachment] = Field(default_factory=list, max_length=5)
     review_answer: bool = Field(default=False, description="是否按本轮本地检索材料复核回答")
     image_url: Optional[str] = Field(default=None, max_length=4096)
     thread_id: str = Field(
@@ -46,7 +68,11 @@ class ChatRequest(BaseModel):
     @model_validator(mode="after")
     def require_message_or_image(self) -> "ChatRequest":
         """Allow image-only questions, but reject an empty request."""
-        if not self.message.strip() and not self.image_url:
+        if sum(len(a.text) for a in self.attachments) > 60000:
+            raise ValueError("附件提取文字合计不能超过 60000 字符")
+        if sum(len(a.image) for a in self.attachments) > 28000000:
+            raise ValueError("附件图片总量过大")
+        if not self.message.strip() and not self.image_url and not self.attachments:
             raise ValueError("message 和 image_url 不能同时为空")
         return self
 

@@ -12,7 +12,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1 import chat
-from app.api.v1 import oss
+from app.api.v1 import oss, files
 from app.common.logger import setup_logging
 from app.agent.law import create_law_agent, model
 from app.refagent.evidence_review import EvidenceReviewer
@@ -37,8 +37,8 @@ async def lifespan(app: FastAPI):
         yield
 
 app = FastAPI(
-    title="Personal Chief API",
-    description="私厨",
+    title="矿铭法律AI助理",
+    description="法律问答与多文件分析",
     version="0.1.0",
     lifespan=lifespan,
 )
@@ -66,6 +66,8 @@ async def health_check():
 # 2.挂载路由
 app.include_router(chat.router, prefix="/api/v1", tags=["对话"])
 app.include_router(oss.router, prefix="/api/v1", tags=["申请上传签名url"])
+
+app.include_router(files.router, prefix="/api/v1", tags=["文件上传"])
 
 # 3.挂载前端资源
 static_dir = Path(__file__).resolve().parent / "static"

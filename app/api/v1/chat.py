@@ -19,6 +19,7 @@ async def chat_endpoint(request: Request, payload: ChatRequest):
             payload.thread_id,
             review_answer=payload.review_answer,
             reviewer=request.app.state.reviewer,
+            attachments=payload.attachments,
         ),
         media_type="text/event-stream"
     )

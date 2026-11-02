@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#172536" />
     <meta name="description" content="让法律问题，有据可循。" />
-    <title>律知 · 法律 AI 助理</title>
+    <title>矿铭法律AI助理</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -15,11 +15,11 @@
   <body>
     <div class="app-shell">
       <aside class="sidebar" id="sidebar" aria-label="会话侧栏">
-        <a class="brand" href="/" aria-label="律知首页">
+        <a class="brand" href="/" aria-label="矿铭法律AI助理首页">
           <span class="brand-mark" aria-hidden="true">
             <svg viewBox="0 0 32 32" fill="none"><path d="M16 5v21M8 10h16M8 10l-4 9h8l-4-9Zm16 0-4 9h8l-4-9ZM11 27h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="16" cy="5" r="2" fill="currentColor"/></svg>
           </span>
-          <span class="brand-copy"><strong>律知</strong><small>LEGAL AI ASSISTANT</small></span>
+          <span class="brand-copy"><strong>矿铭法律AI助理</strong><small>LEGAL AI ASSISTANT</small></span>
         </a>
 
         <button class="new-chat-button" id="newChatButton" type="button">
@@ -34,7 +34,7 @@
           <span class="note-icon" aria-hidden="true">✳</span>
           <div><strong>让每个结论都有依据</strong><p>结合本地法律资料与联网检索</p></div>
         </div>
-        <div class="sidebar-footer"><span class="avatar">知</span><span><strong>个人工作台</strong><small>你的法律研究助手</small></span><span class="footer-more">···</span></div>
+        <div class="sidebar-footer"><span class="avatar">矿</span><span><strong>个人工作台</strong><small>你的法律研究助手</small></span><span class="footer-more">···</span></div>
       </aside>
 
       <div class="session-context-menu" id="sessionContextMenu" role="menu" aria-label="会话操作" hidden>
@@ -79,15 +79,16 @@
             <div class="composer-wrap">
               <div class="attachment-preview" id="attachmentPreview" hidden></div>
               <div class="composer">
-                <input id="imageInput" type="file" accept="image/*" hidden />
-                <button class="attach-button" id="attachButton" type="button" aria-label="添加图片" title="上传图片">
+                <input id="imageInput" type="file" accept=".pdf,.docx,.txt,.md,.csv,.png,.jpg,.jpeg,.webp" multiple hidden />
+                <button class="attach-button" id="attachButton" type="button" aria-label="添加文件" title="上传多个文件：PDF、Word、文本或图片">
                   <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><circle cx="9" cy="9" r="1.7"/><path d="m20.5 15-4.4-4.4a2 2 0 0 0-2.8 0L6 18"/></svg>
                 </button>
                 <textarea id="messageInput" rows="1" placeholder="描述你的法律问题……" aria-label="输入法律问题"></textarea>
                 <div class="composer-tools"><span class="enter-hint">Enter 发送 · Shift + Enter 换行</span><button class="send-button" id="sendButton" type="button" aria-label="发送消息" disabled><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m21 3-7.2 18-3.9-7.9L2 9.2 21 3Z"/><path d="M10 13 21 3"/></svg></button></div>
               </div>
+              <div class="upload-help">支持 PDF、Word、TXT、Markdown、CSV 和图片 · 最多 5 个，每个 10 MB，总计 20 MB</div>
               <label class="review-option"><input id="reviewAnswer" type="checkbox" />回答复核<span>依据本轮检索材料检查初稿，等待时间会增加</span></label>
-              <div class="composer-caption"><span>律知可能会出错，请核对重要法律信息。</span><span class="powered-by">POWERED BY AI</span></div>
+              <div class="composer-caption"><span>矿铭法律AI助理可能会出错，请核对重要法律信息。</span><span class="powered-by">POWERED BY AI</span></div>
               <div class="notice" id="notice" role="status" aria-live="polite"></div>
             </div>
           </div>

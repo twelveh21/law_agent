@@ -4,7 +4,7 @@
   const $ = (selector) => document.querySelector(selector);
   const storageKey = "lvzhi.sessions.v1";
   const activeKey = "lvzhi.activeThread.v1";
-  const state = { sessions: [], activeId: "", busy: false, deletingSessionId: "", historyRequest: 0, imageFile: null, imagePreview: "", contextSessionId: "" };
+  const state = { sessions: [], activeId: "", busy: false, deletingSessionId: "", historyRequest: 0, files: [], contextSessionId: "" };
 
   const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
@@ -172,12 +172,12 @@
     setWelcome(false);
     const row = document.createElement("article");
     row.className = `message-row ${message.role === "user" ? "user" : "assistant"}`;
-    const avatar = message.role === "assistant" ? '<span class="message-avatar" aria-hidden="true">知</span>' : "";
+    const avatar = message.role === "assistant" ? '<span class="message-avatar" aria-hidden="true">矿</span>' : "";
     // 正文统一使用 content；text 作为兼容旧版历史消息数据的后备字段。
     const messageContent = message.content ?? message.text ?? "";
     const content = escapeHtml(messageContent);
-    const image = message.imageUrl ? `<img class="message-image" src="${escapeHtml(message.imageUrl)}" alt="用户上传的图片" />` : "";
-    row.innerHTML = `${avatar}<div class="message-content"><div class="message-role">${message.role === "user" ? "你" : "律知"}</div><div class="message-text">${content}</div>${image}</div>`;
+    const image = (message.imageUrls || (message.imageUrl ? [message.imageUrl] : [])).map(url => `<img class="message-image" src="${escapeHtml(url)}" alt="用户上传的图片" />`).join("");
+    row.innerHTML = `${avatar}<div class="message-content"><div class="message-role">${message.role === "user" ? "你" : "矿铭法律AI助理"}</div><div class="message-text">${content}</div>${image}</div>`;
     $("#messageList").append(row);
     scrollToBottom();
     return row.querySelector(".message-text");
@@ -196,14 +196,17 @@
   function contentParts(message) {
     if (typeof message.content === "string") return { content: message.content, imageUrl: "" };
     let text = "";
-    let imageUrl = "";
+    const imageUrls = [];
     if (Array.isArray(message.content)) {
       for (const part of message.content) {
-        if (part.type === "text" && part.text) text += part.text;
-        if (part.type === "image" && part.url) imageUrl = part.url;
+        if (part.type === "text" && part.text) {
+          const attachment = part.text.match(/^\n\[用户附件：([^\n]+)\]/);
+          text += attachment ? "\n附件：" + attachment[1] : part.text;
+        }
+        if (part.type === "image" && part.url) imageUrls.push(part.url);
       }
     }
-    return { content: text, imageUrl };
+    return { content: text, imageUrls };
   }
 
   async function switchSession(id) {
@@ -224,7 +227,7 @@
       const normalized = messages
         .map((message) => ({ role: message.role, ...contentParts(message) }))
         // 隐藏空白历史记录；图片消息即使没有文字也需要显示。
-        .filter((message) => String(message.content || "").trim() || message.imageUrl);
+        .filter((message) => String(message.content || "").trim() || message.imageUrl || message.imageUrls?.length);
       renderMessages(normalized);
     } catch (error) {
       if (requestId !== state.historyRequest) return;
@@ -246,7 +249,7 @@
 
   function setBusy(busy) {
     state.busy = busy;
-    $("#sendButton").disabled = busy || (!$("#messageInput").value.trim() && !state.imageFile);
+    $("#sendButton").disabled = busy || (!$("#messageInput").value.trim() && !state.files.length);
     $("#attachButton").disabled = busy;
     $("#messageInput").disabled = busy;
     $("#sendButton").innerHTML = busy
@@ -254,34 +257,35 @@
       : '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m21 3-7.2 18-3.9-7.9L2 9.2 21 3Z"/><path d="M10 13 21 3"/></svg>';
   }
 
-  async function uploadImage(file) {
-    const filename = `${Date.now()}.${file.name.split(".").pop() || "jpg"}`;
-    const signedResponse = await fetch(`/api/v1/oss/presign?filename=${encodeURIComponent(filename)}`);
-    if (signedResponse.status === 429) throw new Error("图片上传请求太频繁，请一分钟后再试。");
-    if (!signedResponse.ok) throw new Error("获取图片上传地址失败，请稍后重试。");
-    const signed = await signedResponse.json();
-    const uploadResponse = await fetch(String(signed.uploadUrl).replace(/^['"]|['"]$/g, ""), {
-      method: "PUT", body: file, headers: { "Content-Type": signed.contentType || file.type },
+  async function uploadFile(file) {
+    const response = await fetch(`/api/v1/files/parse?filename=${encodeURIComponent(file.name)}`, {
+      method: "POST", body: file, headers: { "Content-Type": "application/octet-stream" },
     });
-    if (!uploadResponse.ok) throw new Error(`图片上传失败（${uploadResponse.status}）。`);
-    return String(signed.accessUrl).replace(/^['"]|['"]$/g, "");
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(`${file.name}：${typeof error.detail === "string" ? error.detail : "上传失败，请稍后重试"}`);
+    }
+    return response.json();
   }
 
   async function sendMessage() {
     const input = $("#messageInput");
     const text = input.value.trim();
-    const file = state.imageFile;
+    const files = [...state.files];
     const reviewAnswer = $("#reviewAnswer").checked;
-    if (state.busy || (!text && !file)) return;
+    if (state.busy || (!text && !files.length)) return;
     showNotice("");
     setBusy(true);
 
     try {
-      let imageUrl = "";
-      if (file) imageUrl = await uploadImage(file);
-      const userMessage = { role: "user", content: text, imageUrl };
+      const attachments = [];
+      for (const file of files) attachments.push(await uploadFile(file));
+      if (attachments.reduce((n, item) => n + (item.text || "").length, 0) > 60000) {
+        throw new Error("附件文字合计超过 60000 字符，请分批发送。");
+      }
+      const userMessage = { role: "user", content: text + (files.length ? "\n附件：" + files.map(f => f.name).join("、") : "") };
       appendMessage(userMessage);
-      updateSessionTitle(text || "图片法律咨询");
+      updateSessionTitle(text || "文件法律咨询");
       input.value = "";
       input.style.height = "auto";
       clearAttachment();
@@ -291,7 +295,7 @@
       const response = await fetch("/api/v1/chat/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, image_url: imageUrl, thread_id: state.activeId, review_answer: reviewAnswer }),
+        body: JSON.stringify({ message: text, attachments, thread_id: state.activeId, review_answer: reviewAnswer }),
       });
       if (response.status === 429) throw new Error("请求太频繁，请一分钟后再试。");
       if (response.status === 422) throw new Error("消息或会话参数不符合要求，请缩短消息后重试。");
@@ -325,30 +329,41 @@
   }
 
   function clearAttachment() {
-    if (state.imagePreview) URL.revokeObjectURL(state.imagePreview);
-    state.imageFile = null;
-    state.imagePreview = "";
+    state.files = [];
     $("#imageInput").value = "";
-    $("#attachmentPreview").hidden = true;
-    $("#attachmentPreview").innerHTML = "";
-    updateSendAvailability();
+    renderAttachments();
   }
 
   function updateSendAvailability() {
-    $("#sendButton").disabled = state.busy || (!$("#messageInput").value.trim() && !state.imageFile);
+    $("#sendButton").disabled = state.busy || (!$("#messageInput").value.trim() && !state.files.length);
   }
 
-  function selectImage(file) {
-    if (!file || !file.type.startsWith("image/")) return;
-    if (file.size > 10 * 1024 * 1024) { showNotice("图片不能超过 10 MB。"); return; }
-    clearAttachment();
-    state.imageFile = file;
-    state.imagePreview = URL.createObjectURL(file);
-    $("#attachmentPreview").hidden = false;
-    $("#attachmentPreview").innerHTML = `<img src="${state.imagePreview}" alt="待发送图片预览"><span class="attachment-name">${escapeHtml(file.name)}</span><button class="remove-attachment" type="button" aria-label="移除图片">×</button>`;
-    $(".remove-attachment").addEventListener("click", clearAttachment);
-    showNotice("");
+  function renderAttachments() {
+    const preview = $("#attachmentPreview");
+    preview.hidden = !state.files.length;
+    preview.innerHTML = state.files.map((file, index) => `<div class="attachment-item"><span class="attachment-name">${escapeHtml(file.name)} (${(file.size / 1024).toFixed(0)} KB)</span><button class="remove-attachment" data-index="${index}" type="button" aria-label="移除 ${escapeHtml(file.name)}">×</button></div>`).join("");
+    preview.querySelectorAll("button").forEach(button => button.addEventListener("click", () => {
+      if (state.busy) return;
+      state.files.splice(Number(button.dataset.index), 1);
+      renderAttachments();
+    }));
     updateSendAvailability();
+  }
+
+  function selectFiles(files) {
+    const next = [...state.files];
+    for (const file of files || []) {
+      if (!/\.(pdf|docx|txt|md|csv|png|jpe?g|webp)$/i.test(file.name)) { showNotice("不支持的文件格式：" + file.name); return; }
+      if (!file.size || file.size > 10 * 1024 * 1024) { showNotice("文件不能为空，且单个文件不能超过 10 MB。"); return; }
+      if (!next.some(f => f.name === file.name && f.size === file.size && f.lastModified === file.lastModified)) next.push(file);
+    }
+    if (next.length > 5 || next.reduce((n, f) => n + f.size, 0) > 20 * 1024 * 1024) {
+      showNotice("每次最多 5 个文件，总计不能超过 20 MB。"); return;
+    }
+    state.files = next;
+    $("#imageInput").value = "";
+    renderAttachments();
+    showNotice("");
   }
 
   function closeSidebar() {
@@ -370,7 +385,7 @@
     $("#topNewChatButton").addEventListener("click", createSession);
     $("#sendButton").addEventListener("click", sendMessage);
     $("#attachButton").addEventListener("click", () => $("#imageInput").click());
-    $("#imageInput").addEventListener("change", (event) => selectImage(event.target.files?.[0]));
+    $("#imageInput").addEventListener("change", (event) => selectFiles(event.target.files));
     $("#messageInput").addEventListener("input", (event) => {
       event.target.style.height = "auto";
       event.target.style.height = `${Math.min(event.target.scrollHeight, 150)}px`;

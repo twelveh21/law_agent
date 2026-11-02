@@ -178,3 +178,9 @@ button { color: inherit; }
 .review-option { display: flex; align-items: center; gap: 6px; padding: 9px 3px 0; color: #626b69; font-size: 12px; flex-wrap: wrap; }
 .review-option input { accent-color: #ad8652; }
 .review-option span { color: #858c89; font-size: 11px; }
+
+.attachment-preview { flex-wrap: wrap; }
+.attachment-item { display:flex; align-items:center; gap:8px; max-width:100%; padding:5px 9px; background:#f5f3ee; border-radius:8px; }
+.attachment-name { overflow-wrap:anywhere; }
+.upload-help { font-size:11px; color:#777; margin-top:8px; line-height:1.6; }
+.brand-copy strong { font-size:17px; }
